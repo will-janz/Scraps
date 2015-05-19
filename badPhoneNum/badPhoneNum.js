@@ -23,29 +23,41 @@ var cur10Num = largePhones.base;
 var invalid10Num = 0;
 
 // Updates on what's going on
-// This uhh... Is infinite. For now.
+// This is put on its own loop to prevent stdout from getting flooded
 var update10Loop = setInterval(function() {
   
   process.stdout.write(
     "Invalid numbers: " + invalid10Num + 
     ", current number: " + cur10Num + 
-    ", (" + Math.round(((cur10Num - largePhones.base) / (largePhones.max - largePhones.base)) * 100) + "%)" + "\r");
+    ", (" + Math.round(((cur10Num - largePhones.base) / (largePhones.max - largePhones.base)) * 100) + "%)");
+  
+  if(check10VindaLoop) {
+    process.stdout.write("\r");
+  } else {
+    process.stdout.write("\n");
+    clearInterval(update10Loop);
+  }
 }, 1000);
 
 // Does all the hard work
-var check10Loop = setInterval(function() {
+// Chunks the workload into 1000000 checks,
+// occasionally unblocking the update10Loop for updates
+var chunkEnd = 0;
+var check10VindaLoop = setInterval(function() {
   
-  if(cur10Num.toString().indexOf("911") > -1) {
-    invalid10Num++;
+  chunkEnd = cur10Num + 1000000;
+  
+  for(; cur10Num < chunkEnd; cur10Num++) {
+    if(cur10Num.toString().indexOf("911") > -1) {
+      invalid10Num++;
+    }
+    
+    if(cur10Num > largePhones.max) {
+      clearInterval(check10VindaLoop);
+      break;
+    }
   }
-  
-  cur10Num++;
-  
-  // Stop self when max point is reached
-  if(cur10Num > largePhones.max) {
-    clearInterval(check10Loop);
-  }
-}, 1);
+}, 10);
 
 /*
  * While JS is a bit of a clusterfuck, both of those loops
